@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_migrate import Migrate, migrate
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from config import config
@@ -15,6 +15,6 @@ def create_app(config_name="default"):
 
     db.init_app(app)
     jwt.init_app(app)
-    migrate.init_app(app,db)
+    migrate.init_app(app, db)
 
     return app
