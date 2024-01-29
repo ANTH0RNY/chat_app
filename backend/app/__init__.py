@@ -17,4 +17,7 @@ def create_app(config_name="default"):
     jwt.init_app(app)
     migrate.init_app(app, db)
 
+    from .api import api
+
+    app.register_blueprint(api)
     return app

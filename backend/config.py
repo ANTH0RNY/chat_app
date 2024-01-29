@@ -1,7 +1,7 @@
 import os
-
+from datetime import timedelta
 basedir = os.path.abspath(os.path.dirname(__file__))
-
+ACCESS_EXPIRES = timedelta(hours=1)
 
 class Config:
     SECRET_KEY = (
@@ -9,7 +9,8 @@ class Config:
         or "sdjknfquiwehuirywaueijqeryyqweurruytweifjdahncduewteruwieripwqe1234567890-=#$%#$%^&*&^%^&*"
     )
     SQLAlchemy_TRACK_MODIFICATIONS = False
-
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY") or 'sakejshueurieyhw34784ruejwrfw7457w3498293jr4iew9845y348597438i9jcijw orjifnwc uw 845uc'
+    JWT_ACCESS_TOKEN_EXPIRES = ACCESS_EXPIRES
 
 class DevConfig(Config):
     DEBUG = True

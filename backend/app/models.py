@@ -1,4 +1,4 @@
-from . import db
+from . import db, jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -31,3 +31,8 @@ class Message(db.Model):
     sender = db.Column(db.Integer, db.ForeignKey("User.id"))
     recipient = db.Column(db.Integer, db.ForeignKey("User.id"))
     body = db.Column(db.Text)
+
+class TokenBlocklist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(36), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False)
