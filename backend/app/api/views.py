@@ -4,6 +4,7 @@ from app import jwt, db
 from app.models import User, TokenBlocklist, Message
 from flask_jwt_extended import create_access_token, current_user, jwt_required, get_jwt
 from datetime import datetime, timezone
+from sqlalchemy import or_, and_
 
 
 @jwt.user_identity_loader
@@ -77,11 +78,15 @@ def user():
 @jwt_required()
 def messages(id):
     if request.method == "GET":
-        message = Message.query.filter(id=id).one_or_none()
-        if message is None:
-            return jsonify("wrong Id"), 400
-        # if message.sender == current_user.id 
+        # user = User.query.filter_by(id=id).first()
+        sender_id= current_user.id
+        recipient_id = id
+        messages  = Message.query.filter(or_(and_(Message.sender == sender_id, Message.recipient == recipient_id), and_(Message.sender == recipient_id, Message.recipient == sender_id))).order_by(Message.date_created.desc()).all()
+        messages_object=[{'id': x.id, 'to': x.sender, 'from': x.recipient, 'body': x.body, 'date_created': x.date_created} for x in messages]
+        # print(len(messages_object))
+        return jsonify(messages_object)
     return f"hello {id}"
+
 @api.route("/")
 def index():
     return jsonify({"msg":"hello"})

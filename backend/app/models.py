@@ -1,5 +1,6 @@
 from . import db, jwt
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 
 class User(db.Model):
@@ -31,6 +32,10 @@ class Message(db.Model):
     sender = db.Column(db.Integer, db.ForeignKey("User.id"))
     recipient = db.Column(db.Integer, db.ForeignKey("User.id"))
     body = db.Column(db.Text)
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __str__(self) -> str:
+        return f'sender: {self.sender} recipient: {self.recipient} date: {self.date_created}'
 
 class TokenBlocklist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
