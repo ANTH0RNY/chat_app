@@ -80,6 +80,8 @@ def messages(id):
         message = Message.query.filter(id=id).one_or_none()
         if message is None:
             return jsonify("wrong Id"), 400
-        if message.sender == current_user.id 
+        # if message.sender == current_user.id 
     return f"hello {id}"
-    
+@api.route("/")
+def index():
+    return jsonify({"msg":"hello"})
