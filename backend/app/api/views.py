@@ -38,7 +38,7 @@ def login():
         return jsonify("Wrong username or password"), 401
 
     access_token = create_access_token(identity=user)
-    return jsonify(access_token=access_token)
+    return jsonify(msg="login succeful", access_token=access_token)
 
 
 @api.route("/logout")
