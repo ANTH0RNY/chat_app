@@ -5,7 +5,7 @@ from app.models import User, TokenBlocklist, Message
 from flask_jwt_extended import create_access_token, current_user, jwt_required, get_jwt
 from datetime import datetime, timezone
 from sqlalchemy import or_, and_
-
+from sqlalchemy.exc import IntegrityError
 
 @jwt.user_identity_loader
 def user_identity_lookup(user):
@@ -51,15 +51,15 @@ def modify_token():
     return jsonify(msg="JWT revoked")
 
 
-@api.route("/users", methods=["GET", "Post"])
+@api.route("/user", methods=["GET", "Post"])
 @jwt_required(optional=True)
 def user():
     print(current_user)
     if request.method == "GET":
         if current_user is None:
-            return jsonify({msg:'UNAUTHORIZED'}), 401
+            return jsonify({'msg':'UNAUTHORIZED'}), 401
         return jsonify({'id': current_user.id, 'username': current_user.username})
-        
+
     username = request.json.get("username", None)
     password = request.json.get("password", None)
 
@@ -85,7 +85,18 @@ def messages(id):
         messages_object=[{'id': x.id, 'to': x.sender, 'from': x.recipient, 'body': x.body, 'date_created': x.date_created} for x in messages]
         # print(len(messages_object))
         return jsonify(messages_object)
-    return f"hello {id}"
+    body = request.json.get("body", None)
+    recipient = User.query.filter_by(id=id).first()
+    if body is None or recipient is None:
+        return jsonify({'msg': "Bad request"}), 400
+    new_message = Message(sender= current_user.id, recipient = recipient.id, body=body)
+    db.session.add(new_message)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        return jsonify({'msg': "something went wrong contact administrator"}), 500
+
+    return jsonify({'msg': 'Message added successfully'}), 201
 
 @api.route("/")
 def index():
