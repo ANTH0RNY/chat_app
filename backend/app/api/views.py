@@ -37,7 +37,7 @@ def login():
         return jsonify("Wrong username or password"), 401
 
     access_token = create_access_token(identity=user)
-    return jsonify(access_token=access_token)
+    return jsonify(msg="login succeful", access_token=access_token)
 
 
 @api.route("/logout")
@@ -79,9 +79,10 @@ def messages(id):
     if request.method == "GET":
         message = Message.query.filter(id=id).one_or_none()
         if message is None:
-            return jsonify("wrong Id"), 400
+            return jsonify("message not found"), 404
         # if message.sender == current_user.id 
     return f"hello {id}"
+
 @api.route("/")
 def index():
     return jsonify({"msg":"hello"})
