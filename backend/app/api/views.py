@@ -1,7 +1,7 @@
 from . import api
 from flask import request, jsonify
 from app import jwt, db
-from app.models import User, TokenBlocklist
+from app.models import User, TokenBlocklist, Message
 from flask_jwt_extended import create_access_token, current_user, jwt_required, get_jwt
 from datetime import datetime, timezone
 
@@ -71,3 +71,15 @@ def user():
     db.session.add(new_user)
     db.session.commit()
     return jsonify("User added successfully"), 201
+
+
+@api.route("/message/<int:id>", methods=["GET", "POST"])
+@jwt_required()
+def messages(id):
+    if request.method == "GET":
+        message = Message.query.filter(id=id).one_or_none()
+        if message is None:
+            return jsonify("wrong Id"), 400
+        if message.sender == current_user.id 
+    return f"hello {id}"
+    
