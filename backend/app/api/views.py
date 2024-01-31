@@ -4,7 +4,8 @@ from app import jwt, db
 from app.models import User, TokenBlocklist, Message
 from flask_jwt_extended import create_access_token, current_user, jwt_required, get_jwt
 from datetime import datetime, timezone
-
+from sqlalchemy import or_, and_
+from sqlalchemy.exc import IntegrityError
 
 @jwt.user_identity_loader
 def user_identity_lookup(user):
@@ -50,15 +51,15 @@ def modify_token():
     return jsonify(msg="JWT revoked")
 
 
-@api.route("/users", methods=["GET", "Post"])
+@api.route("/user", methods=["GET", "Post"])
 @jwt_required(optional=True)
 def user():
     print(current_user)
     if request.method == "GET":
         if current_user is None:
-            return jsonify({msg:'UNAUTHORIZED'}), 401
+            return jsonify({'msg':'UNAUTHORIZED'}), 401
         return jsonify({'id': current_user.id, 'username': current_user.username})
-        
+
     username = request.json.get("username", None)
     password = request.json.get("password", None)
 
@@ -77,11 +78,25 @@ def user():
 @jwt_required()
 def messages(id):
     if request.method == "GET":
-        message = Message.query.filter(id=id).one_or_none()
-        if message is None:
-            return jsonify("message not found"), 404
-        # if message.sender == current_user.id 
-    return f"hello {id}"
+        # user = User.query.filter_by(id=id).first()
+        sender_id= current_user.id
+        recipient_id = id
+        messages  = Message.query.filter(or_(and_(Message.sender == sender_id, Message.recipient == recipient_id), and_(Message.sender == recipient_id, Message.recipient == sender_id))).order_by(Message.date_created.desc()).all()
+        messages_object=[{'id': x.id, 'to': x.sender, 'from': x.recipient, 'body': x.body, 'date_created': x.date_created} for x in messages]
+        # print(len(messages_object))
+        return jsonify(messages_object)
+    body = request.json.get("body", None)
+    recipient = User.query.filter_by(id=id).first()
+    if body is None or recipient is None:
+        return jsonify({'msg': "Bad request"}), 400
+    new_message = Message(sender= current_user.id, recipient = recipient.id, body=body)
+    db.session.add(new_message)
+    try:
+        db.session.commit()
+    except IntegrityError:
+        return jsonify({'msg': "something went wrong contact administrator"}), 500
+
+    return jsonify({'msg': 'Message added successfully'}), 201
 
 @api.route("/")
 def index():
