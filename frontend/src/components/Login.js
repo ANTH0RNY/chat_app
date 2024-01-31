@@ -1,3 +1,8 @@
+/**
+ * The Login component is a form that allows users to enter their username and password to authenticate
+ * and log in.
+ * @returns The Login component is being returned.
+ */
 import React, { useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../AuthContext";
