@@ -30,3 +30,16 @@ This is a flask backend for my chat app
 |message/<int: id>|post| body: string| true | adds a message to db consisting of current user as sender and id as recipient|
 
 ___
+## Populating the tables withfake values
+**make sure your virtual environment is active**
+Accessing flask shell
+```shell
+flask shell
+```
+importing functions, *assuming you are at root directory*
+```python
+from app.faker import make_users, make_messages
+make_users() #to make users this should be first step assuming no user already in it
+make_messages() #to make messages
+```
+General good practice to make much, much more messages than users

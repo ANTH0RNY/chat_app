@@ -85,6 +85,8 @@ def messages(id):
         messages_object=[{'id': x.id, 'to': x.sender, 'from': x.recipient, 'body': x.body, 'date_created': x.date_created} for x in messages]
         # print(len(messages_object))
         return jsonify(messages_object)
+    if id == current_user.id:
+        return jsonify({'msg': "Can't send message to yourself"}), 401
     body = request.json.get("body", None)
     recipient = User.query.filter_by(id=id).first()
     if body is None or recipient is None:
@@ -97,6 +99,14 @@ def messages(id):
         return jsonify({'msg': "something went wrong contact administrator"}), 500
 
     return jsonify({'msg': 'Message added successfully'}), 201
+
+
+# db.session.query(User).join(Message, db.or_(Message.sender == User.id, Message.recipient == User.id))
+# .filter(db.or_(Message.sender == 2, Message.recipient== 2)).filter(User.id != 2).order_by(Message.date_created).all()
+
+# User.query.join(Message, db.or_(Message.sender == User.id, Message.recipient == User.id))
+# .filter(db.or_(Message.sender == 2, Message.recipient==2)).filter(User.id != 2).order_by(Message.date_created).all()
+
 
 @api.route("/")
 def index():

@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from faker import Faker
 from . import db
 from .models import Message, User
-from datetime import datetime
+from datetime import datetime, timedelta
 
 fake = Faker()
 
@@ -22,8 +22,10 @@ def make_users(count=10):
 def make_messages(count=100):
     user_count = User.query.count()
     i = 0
-    start_date = datetime(2023, 1,1)    
-    end_date = datetime(2024, 1,30)
+    # start_date = datetime(2023, 1,1)    
+    # end_date = datetime(2024, 1,30)
+    start_date= datetime.utcnow()
+    end_date=start_date - timedelta(365)
     
     while i < count:
         sender = User.query.offset(randint(0, user_count - 1)).first()
