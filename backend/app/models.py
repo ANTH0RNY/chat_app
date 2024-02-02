@@ -8,10 +8,12 @@ class User(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
-    
-    sender = db.relationship("Message", backref="From", foreign_keys="Message.sender")
+
+    sender = db.relationship(
+        "Message", backref="From", foreign_keys="Message.sender", lazy="dynamic"
+    )
     recipient = db.relationship(
-        "Message", backref="To", foreign_keys="Message.recipient"
+        "Message", backref="To", foreign_keys="Message.recipient", lazy="dynamic"
     )
 
     @property
@@ -33,9 +35,10 @@ class Message(db.Model):
     recipient = db.Column(db.Integer, db.ForeignKey("User.id"))
     body = db.Column(db.Text)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def __str__(self) -> str:
-        return f'sender: {self.sender} recipient: {self.recipient} date: {self.date_created}'
+        return f"sender: {self.sender} recipient: {self.recipient} date: {self.date_created}"
+
 
 class TokenBlocklist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
