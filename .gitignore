@@ -140,6 +140,8 @@ __pycache__/
 # C extensions
 *.so
 
+*.sqlite*
+backend/*.sqlite*
 # Distribution / packaging
 .Python
 build/

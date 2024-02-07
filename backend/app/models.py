@@ -1,5 +1,6 @@
 from . import db, jwt
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 
 class User(db.Model):
@@ -7,10 +8,16 @@ class User(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
-    
-    sender = db.relationship("Message", backref="From", foreign_keys="Message.sender")
+    profile_url = db.Column(
+        db.String(), default="https://picsum.photos/seed/picsum/200", nullable=False
+    )
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+
+    sender = db.relationship(
+        "Message", backref="From", foreign_keys="Message.sender", lazy="dynamic"
+    )
     recipient = db.relationship(
-        "Message", backref="To", foreign_keys="Message.recipient"
+        "Message", backref="To", foreign_keys="Message.recipient", lazy="dynamic"
     )
 
     @property
@@ -24,13 +31,23 @@ class User(db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def ping(self):
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
+        db.session.commit()
+
 
 class Message(db.Model):
     __tablename__ = "Message"
     id = db.Column(db.Integer, primary_key=True)
-    sender = db.Column(db.Integer, db.ForeignKey("User.id"))
-    recipient = db.Column(db.Integer, db.ForeignKey("User.id"))
+    sender = db.Column(db.Integer, db.ForeignKey("User.id"), index=True)
+    recipient = db.Column(db.Integer, db.ForeignKey("User.id"), index=True)
     body = db.Column(db.Text)
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __str__(self) -> str:
+        return f"sender: {self.sender} recipient: {self.recipient} date: {self.date_created}"
+
 
 class TokenBlocklist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
