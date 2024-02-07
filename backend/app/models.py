@@ -31,8 +31,8 @@ class User(db.Model):
 class Message(db.Model):
     __tablename__ = "Message"
     id = db.Column(db.Integer, primary_key=True)
-    sender = db.Column(db.Integer, db.ForeignKey("User.id"))
-    recipient = db.Column(db.Integer, db.ForeignKey("User.id"))
+    sender = db.Column(db.Integer, db.ForeignKey("User.id"), index=True)
+    recipient = db.Column(db.Integer, db.ForeignKey("User.id"), index=True)
     body = db.Column(db.Text)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
 

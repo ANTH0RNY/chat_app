@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import or_, and_
 from sqlalchemy.exc import IntegrityError
 
+
 @jwt.user_identity_loader
 def user_identity_lookup(user):
     return user.id
@@ -82,7 +83,7 @@ def messages(id):
         sender_id= current_user.id
         recipient_id = id
         messages  = Message.query.filter(or_(and_(Message.sender == sender_id, Message.recipient == recipient_id), and_(Message.sender == recipient_id, Message.recipient == sender_id))).order_by(Message.date_created.desc()).all()
-        messages_object=[{'id': x.id, 'to': {"id": x.To.id, "username":x.To.username}, 'from': {"id":x.From.id, "username":x.From.username}, 'body': x.body, 'date_created': x.date_created} for x in messages]
+        messages_object=[{'id': x.id, 'to': {"id": x.To.id, "username":x.To.username}, 'from': {"id":x.From.id, "username":x.From.username}, 'body': x.body, 'date_created': x.date_created.isoformat()} for x in messages]
         # print(len(messages_object))
         return jsonify(messages_object)
     if id == current_user.id:
@@ -107,7 +108,7 @@ def messages(id):
 
 # User.query.join(Message, db.or_(Message.sender == User.id, Message.recipient == User.id))
 # .filter(db.or_(Message.sender == 2, Message.recipient==2)).filter(User.id != 2).order_by(Message.date_created).all()
-@api.route('/contacts')
+@api.route('/chats')
 @jwt_required()
 def get_contacts():
     users = db.session.query(User).join(Message, db.or_(Message.sender == User.id, Message.recipient == User.id))\
@@ -122,7 +123,8 @@ def add_message_by_username(username):
     body = request.json.get("body", None)
     if user is None or body is None:
         return jsonify({"msg": "bad request"}), 400
-    
+    if user.id == current_user.id:
+        return jsonify(msg="Can't send message to yourself"), 401
     message = Message(sender=current_user.id, recipient=user.id, body=body)
     db.session.add(message)
     try:

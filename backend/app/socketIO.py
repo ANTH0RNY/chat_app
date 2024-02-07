@@ -1,7 +1,9 @@
+from sqlalchemy import event
+from sqlalchemy.exc import IntegrityError
 from . import socketio
 from flask_socketio import emit, ConnectionRefusedError, join_room
 from flask_jwt_extended import decode_token
-from .models import User
+from .models import User, Message
 import json
 
 
@@ -26,7 +28,33 @@ def connect(auth):
         if user is None:
             raise ConnectionRefusedError("Something went wrong contact administrator")
         join_room(user.username)
-        emit("connected", "you have been connected")
+        emit("echo", "you have been connected")
         return jwt_data[0]
     except (KeyError, json.decoder.JSONDecodeError):
         raise ConnectionRefusedError("token not given or auth is in wrong format")
+
+
+@event.listens_for(Message, "after_insert")
+def send_message(mapper, connection, instance):
+    recipient = User.query.filter_by(id=instance.recipient).first()
+    sender = User.query.filter_by(id=instance.sender).first()
+
+    if sender is None or recipient is None:
+        raise IntegrityError(
+            "Message has invalid recipient or sender, the recipient or sender is not in User table"
+        )
+
+    message_object = {
+        "id": instance.id,
+        "to": {
+            "id": recipient.id,
+            "username": recipient.username,
+        },
+        "from":{
+            "id": sender.id,
+            "username": sender.username
+        },
+        "body": instance.body,
+        "date_created": instance.date_created.isoformat(),
+    }
+    socketio.emit(recipient.username, message_object)
