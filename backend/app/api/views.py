@@ -10,13 +10,20 @@ from sqlalchemy.exc import IntegrityError
 
 @jwt.user_identity_loader
 def user_identity_lookup(user):
+    user = User.query.filter_by(id = user.id).one_or_none()
+    if user is not None:
+        user.ping()
     return user.id
 
 
 @jwt.user_lookup_loader
 def user_lookup_callback(jwt_header, jwt_data):
     identity = jwt_data["sub"]
-    return User.query.filter_by(id=identity).one_or_none()
+    user = User.query.filter_by(id=identity).one_or_none()
+    # if user is not None:
+    #     print("\n\n\n it ran \n\n")
+    #     user.ping()
+    return user
 
 
 @jwt.token_in_blocklist_loader
@@ -79,13 +86,16 @@ def user():
 @jwt_required()
 def messages(id):
     if request.method == "GET":
-        # user = User.query.filter_by(id=id).first()
         sender_id= current_user.id
         recipient_id = id
         messages  = Message.query.filter(or_(and_(Message.sender == sender_id, Message.recipient == recipient_id), and_(Message.sender == recipient_id, Message.recipient == sender_id))).order_by(Message.date_created.desc()).all()
-        messages_object=[{'id': x.id, 'to': {"id": x.To.id, "username":x.To.username}, 'from': {"id":x.From.id, "username":x.From.username}, 'body': x.body, 'date_created': x.date_created.isoformat()} for x in messages]
-        # print(len(messages_object))
+        messages_object=[{'id': x.id,\
+         'to': {"id": x.To.id, "username":x.To.username, "profile_url": x.To.profile_url, "last_seen": x.To.last_seen.isoformat()},\
+         'from': {"id":x.From.id, "username":x.From.username, "profile_url": x.From.profile_url, "last_seen": x.From.last_seen.isoformat()},\
+         'body': x.body, 'date_created': x.date_created.isoformat()} for x in messages]
+
         return jsonify(messages_object)
+    
     if id == current_user.id:
         return jsonify({'msg': "Can't send message to yourself"}), 401
     body = request.json.get("body", None)
@@ -113,7 +123,7 @@ def messages(id):
 def get_contacts():
     users = db.session.query(User).join(Message, db.or_(Message.sender == User.id, Message.recipient == User.id))\
             .filter(db.or_(Message.sender == current_user.id, Message.recipient== current_user.id)).filter(User.id != current_user.id).order_by(Message.date_created.desc()).all()
-    contacts = [{"id":x.id, "username": x.username} for x in users]
+    contacts = [{"id":x.id, "username": x.username, "profile_url": x.profile_url, "last_seen": x.last_seen.isoformat()} for x in users]
     return jsonify(contacts)
 
 @api.route("/add_message/<string:username>", methods=["POST"])

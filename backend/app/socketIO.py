@@ -28,6 +28,7 @@ def connect(auth):
         if user is None:
             raise ConnectionRefusedError("Something went wrong contact administrator")
         join_room(user.username)
+        user.ping()
         emit("echo", "you have been connected")
         return jwt_data[0]
     except (KeyError, json.decoder.JSONDecodeError):
@@ -49,10 +50,14 @@ def send_message(mapper, connection, instance):
         "to": {
             "id": recipient.id,
             "username": recipient.username,
+            "profile_url": recipient.profile_url,
+            "last_seen": recipient.last_seen.isoformat(),
         },
         "from":{
             "id": sender.id,
-            "username": sender.username
+            "username": sender.username,
+            "profile_url": sender.profile_url,
+            "last_seen": sender.last_seen.isoformat(),
         },
         "body": instance.body,
         "date_created": instance.date_created.isoformat(),
